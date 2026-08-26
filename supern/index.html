@@ -32,6 +32,7 @@
   --tag-bola-bg:#FFF0BF; --tag-bola-fg:#8A6100;
   --tag-ok-bg:#D7F3E4; --tag-ok-fg:#0A7042;
   --pt-cor:var(--ceu-escuro);
+  --bola-img:url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAMAAACdt4HsAAAAwFBMVEUAAAAAAAAAAAAAAAAAAAAGAADQ+QDwUBzlsRP/FwP/RwD//wD//xT/cTj///8AAAAAAAAAAAAAAAAAAAD3/gAAAAAAAAAAAAAAAABzrAC67hL2ZRLlsRLZvSb7jlbw0LzbsRXmohrS0yLxlDXwyY7crhbtkxzS0SL0j0H018n8Rgf8UQ+2zwv8VhTokhb8Xhzvhx77bSn8dTX8fT78g0PwyaT8RQewzQj8UBHUqRC68hLfoxi+9hfB9xvayEXu6dmSOiIgAAAAQHRSTlMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAUCBQgEBSouKy0miIuDbJL9/fr78/v0/P39/ez9/f39/f39/f39pyjHawAAA1BJREFUeNqVl9tu4yAQhrnZVGk2vepNsdRKdgUOCBE7MVjINu//VivwgZPteEdKVTX9/vlnGAwGYDves6wwkV3flr+dz+BYZEWJOFsClcU3OB5ZgTgfcboEQ8X1II7ufOadBiGEovL3CM79CBQI4a9cZKXNzquqcgJOQRCKvs+76SsLV7OAX4RVEISVmybOxb3iVVXXdb0qMCoIgq7b6auqfjweiwBLBHYUZv75fEQGGGtDBcGyTf5p+Drk3SzMAgRl6/wj4Pmcvo0dCBFU8QeAc2naP/qP8rsCfAERrUUx8Y+Ub9lswI7SLMCCoczM+CwLEPfPL2DmhXh+RONr+HgAvPITAX77WQRMA/g0QEH7fHzinUJz+wgKqOrUfsI7XIinzqcJRtP2CccvzE9IItBq/NcZ4AnPaLj+iYDQDbQCiLORD1d/cUD88AWaBl9GA1YgHp5w9dcFemOh4IxxHjfP1b+FmxJUPlbAHN9O5g8I1LpR+GIrYBPfjmiA000DjR5UD0FRWdc2f4yT7QaKttFaqS4HJWfUtT0S8MJs9cbE00ajte6VUhggTqmPry1+bf8/DsMbARYIjNNjTpEltYOtg2b8bTC4VBjcjQC1nzXrE94MvY3OhppDqt4KTJHyvPHpmQ8FuPfMtI33+KfBFzoVkFJ1gFOa7jmXfgVPBAhJR95Ub8z3/YqA8gR6cLdoytdR+hUB6QkEA2d+PLb5SACxmBeECOO/718VIKUdpGDWp7Mv5ruu2xIo2Gg62mh6C/cLkFLlIGPRLrXP27B+R4f5pewgeEc05onWutvHZwP4BEBJVwyk3gN6NmCeSGkNrdZN18WNW+NNBSCtwRjowtwh7Rk42aM9ErAGtqz7+aUaz7a3sIbKPGt2BRYew+l2QaMZUGo9c8R3+Xw/RCRo4aD2QjoDp+WCwYIWHuQ76F2R6FEDUkYdnN5NytbvwGs6KMDEb1nN/HCQh+FF8+fWjMfNcASXSsH4qvpxswfAIF/TqzwAEA9DP329S2/wRsHvsbJCci2S+j2FdSJKv8UDcMk79ZrPT9vvTJdXJvbSzyZ2JJTC+eXli+PnloTBP4+9u0KM48FTCmN4Of72/AVzKzIFxjn8Av8dJwjzPM8h3Ev9D2SriLrsm8aTAAAAAElFTkSuQmCC") center/contain no-repeat;
   --r:16px; --r-s:11px;
   --f-disp:'Archivo Black','Arial Black',system-ui,sans-serif;
   --f-body:'Outfit','Segoe UI',system-ui,sans-serif;
@@ -90,8 +91,7 @@ button:disabled,[disabled],[aria-disabled="true"]{cursor:default}
 .top .sub{font-size:11px;font-weight:700;opacity:.92;letter-spacing:.08em;text-transform:uppercase;font-family:var(--f-body)}
 .icobtn{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:rgba(255,255,255,.18);color:#fff;font-size:18px;font-weight:800;flex:none}
 .icobtn:active{transform:scale(.94)}
-.ball{width:28px;height:28px;border-radius:50%;background:radial-gradient(circle at 32% 28%,#FFE070,var(--bola) 58%,#E9A800);flex:none;position:relative;box-shadow:inset 0 0 0 2px rgba(255,255,255,.4)}
-.ball::after{content:"";position:absolute;inset:3px;border-radius:50%;border:2px solid rgba(255,255,255,.8);border-left-color:transparent;border-right-color:transparent;transform:rotate(28deg)}
+.ball{width:28px;height:28px;flex:none;background:var(--bola-img);filter:drop-shadow(0 1px 2px rgba(7,32,47,.35))}
 
 .tabs{
   position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;
@@ -280,9 +280,9 @@ input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:34px
 input[type=range]::-webkit-slider-runnable-track{height:10px;border-radius:6px;background:linear-gradient(90deg,var(--ceu),var(--bola));border:1px solid var(--borda)}
 input[type=range]::-moz-range-track{height:10px;border-radius:6px;background:linear-gradient(90deg,var(--ceu),var(--bola));border:1px solid var(--borda)}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:30px;height:30px;margin-top:-11px;border-radius:50%;
-  background:radial-gradient(circle at 34% 30%,#FFE070,var(--bola) 60%,#E9A800);border:2px solid #fff;box-shadow:0 2px 6px rgba(11,58,91,.45)}
+  background:var(--bola-img);border:2px solid #fff;box-shadow:0 2px 6px rgba(11,58,91,.45)}
 input[type=range]::-moz-range-thumb{width:26px;height:26px;border-radius:50%;
-  background:radial-gradient(circle at 34% 30%,#FFE070,var(--bola) 60%,#E9A800);border:2px solid #fff;box-shadow:0 2px 6px rgba(11,58,91,.45)}
+  background:var(--bola-img);border:2px solid #fff;box-shadow:0 2px 6px rgba(11,58,91,.45)}
 .escala{display:flex;justify-content:space-between;font-size:10px;font-weight:700;color:var(--texto-2);padding:0 2px;font-variant-numeric:tabular-nums}
 .marca{padding:2px 5px;border-radius:5px}
 .marca.on{background:var(--laranja);color:#fff}

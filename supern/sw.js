@@ -1,5 +1,5 @@
-const CACHE = "super8-v20";
-const ARQUIVOS = ["./", "./index.html", "./manifest.webmanifest", "./icone-192.png", "./icone-512.png"];
+const CACHE = "super8-v21";
+const ARQUIVOS = ["./", "./index.html", "./manifest.webmanifest", "./icone-192.1mbtxnc.png", "./icone-512.1kjcukb.png"];
 self.addEventListener("install", e => {
   // busca ignorando o cache do navegador, senao a versao nova pode nem chegar
   e.waitUntil(caches.open(CACHE).then(c => Promise.all(

@@ -246,6 +246,25 @@ hr{border:none;border-top:1px solid var(--borda);margin:16px 0}
 .planilha td.cel.folga{color:var(--texto-2);font-weight:400}
 .planilha td.tot{font-family:var(--f-disp);font-size:15px;background:var(--destaque-2)}
 .planilha .np{color:var(--texto-2);font-weight:400}
+/* ---------- tabela de jogos (súmula) ---------- */
+.sumula tbody tr:nth-child(even){background:none}
+.sumula tbody tr.jg{border-top:1px solid var(--borda);cursor:pointer}
+.sumula tbody tr.jg:active td{background:var(--ceu-claro)}
+.sumula tr.rd td{background:var(--areia-3);color:var(--texto);text-align:left;padding:7px 10px;
+  font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:800;white-space:normal}
+.sumula tr.rd .fg{font-weight:600;text-transform:none;letter-spacing:0;color:var(--texto-2)}
+.sumula td.nj{width:34px;color:var(--texto-2);font-weight:700;font-variant-numeric:tabular-nums;line-height:1.15}
+.sumula td.nj span{display:block;font-size:9.5px;opacity:.75}
+.sumula td.eq{text-align:left;font-weight:600;white-space:normal;min-width:104px;line-height:1.25}
+.sumula td.eq.dir{text-align:right}
+.sumula td.eq.venc{color:var(--laranja);font-weight:800}
+.sumula td.pl{width:82px;padding:9px 4px}
+.sumula td.pl .g{font-family:var(--f-disp);font-size:15px;font-variant-numeric:tabular-nums}
+.sumula td.pl .g.win{color:var(--laranja)}
+.sumula td.pl .g.nd{font-family:var(--f-body);font-weight:700;color:var(--texto-2)}
+.sumula td.pl i{font-style:normal;margin:0 5px;font-size:11px;color:var(--texto-2)}
+.sumula td.pl .aov{display:block;margin-top:1px;font-size:9.5px;font-weight:800;
+  letter-spacing:.05em;text-transform:uppercase;color:var(--laranja)}
 .desdobra{display:flex;align-items:center;gap:7px;width:100%;font-weight:700;font-size:13px;color:var(--texto-2);padding:2px 0}
 .desdobra .seta{transition:transform .15s}
 .desdobra[aria-expanded="true"] .seta{transform:rotate(90deg)}
@@ -892,8 +911,13 @@ function telaChave(){
 
   const rs = t.rodadas;
   if(!t.rodadaAtual || t.rodadaAtual > rs.length) t.rodadaAtual = 1;
+  const vista = DB.vistaChave === "tabela" ? "tabela" : "rodadas";
+  let h = '<div class="sec"><div class="seg">'
+    + '<button class="'+(vista==="rodadas"?"on":"")+'" data-vista-chave="rodadas">Rodada a rodada</button>'
+    + '<button class="'+(vista==="tabela"?"on":"")+'" data-vista-chave="tabela">Tabela de jogos</button></div>';
+  if(vista === "tabela") return h + tabelaJogos(t) + '</div>' + blocoAjustes(t);
   const r = rs[t.rodadaAtual-1];
-  let h = '<div class="sec"><div class="pillrow" style="overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px">';
+  h += '<div class="pillrow" style="overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px">';
   rs.forEach(x => {
     const completa = x.jogos.every(j=>j.done);
     h += '<button class="pill'+(x.n===t.rodadaAtual?' on':'')+'" data-rodada="'+x.n+'" style="flex:none">R'+x.n+(completa?' ✓':'')+'</button>';
@@ -906,6 +930,43 @@ function telaChave(){
     +  '<button class="btn grow" data-acao="rodada-ant"'+(t.rodadaAtual<=1?' disabled':'')+'>← Anterior</button>'
     +  '<button class="btn azul grow" data-acao="rodada-prox"'+(t.rodadaAtual>=rs.length?' disabled':'')+'>Próxima →</button></div>';
   h += '</div>' + blocoAjustes(t);
+  return h;
+}
+/* todos os jogos do torneio numa tabela só, no formato da súmula de arena */
+function tabelaJogos(t){
+  const rs = t.rodadas;
+  if(!rs.length) return '<p class="muted">Sem jogos para exibir.</p>';
+  let h = '<div class="tblwrap"><table class="sumula"><thead><tr><th>#</th>'
+    + '<th style="text-align:left">Dupla A</th><th>Placar</th><th style="text-align:right">Dupla B</th>'
+    + '</tr></thead><tbody>';
+  let n = 0;
+  rs.forEach(r => {
+    const completa = r.jogos.length > 0 && r.jogos.every(j=>j.done);
+    h += '<tr class="rd"><td colspan="4">Rodada '+r.n+(completa?' ✓':'')
+      + (r.folgados.length ? ' <span class="fg">· descansa: '+esc(r.folgados.map(id=>nomeDe(t,id)).join(", "))+'</span>' : '')
+      + '</td></tr>';
+    r.jogos.forEach(j => {
+      n++;
+      const A = nomesLado(t,j.a), B = nomesLado(t,j.b);
+      const feito = j.done && j.ga != null;
+      const vA = feito && j.ga > j.gb, vB = feito && j.gb > j.ga;
+      const g = (v,win,nd) => '<span class="g'+(win?' win':'')+(nd?' nd':'')+'">'+v+'</span>';
+      let placar, situacao;
+      if(feito){ placar = g(j.ga,vA)+'<i>×</i>'+g(j.gb,vB); situacao = j.ga+' a '+j.gb; }
+      else if(j.live){ placar = g(j.live.ga||0)+'<i>×</i>'+g(j.live.gb||0)+'<span class="aov">ao vivo</span>'; situacao = "ao vivo"; }
+      else { placar = g("–",false,true)+'<i>×</i>'+g("–",false,true); situacao = "a jogar"; }
+      h += '<tr class="jg" data-placar="'+j.id+'" role="button" tabindex="0" aria-label="'
+        +   esc('Jogo '+n+', quadra '+j.quadra+': '+A+' contra '+B+', '+situacao+'. Tocar para lançar o placar.')+'">'
+        + '<td class="nj">'+n+'<span>Q'+j.quadra+'</span></td>'
+        + '<td class="eq'+(vA?' venc':'')+'">'+esc(A)+'</td>'
+        + '<td class="pl">'+placar+'</td>'
+        + '<td class="eq dir'+(vB?' venc':'')+'">'+esc(B)+'</td></tr>';
+    });
+  });
+  h += '</tbody></table></div>';
+  h += '<p class="small muted" style="margin-top:8px">Todos os jogos do torneio, na ordem das rodadas. '
+    +  '<b>Q1, Q2…</b> é a quadra em que o jogo acontece. Toque numa linha para lançar ou corrigir aquele placar '
+    +  '— o placar ao vivo fica na visão <b>Rodada a rodada</b>.</p>';
   return h;
 }
 function cardJogo(t,j){
@@ -1219,13 +1280,22 @@ function ligarAcoes(){
   view.querySelectorAll("[data-vista]").forEach(b => b.addEventListener("click", ()=>{
     DB.vista = b.dataset.vista; salvar(); render();
   }));
+  view.querySelectorAll("[data-vista-chave]").forEach(b => b.addEventListener("click", ()=>{
+    DB.vistaChave = b.dataset.vistaChave; salvar(); render();
+  }));
   view.querySelectorAll("[data-desdobra]").forEach(b => b.addEventListener("click", ()=>{
     DB.verCadeia = !DB.verCadeia; salvar();
     b.setAttribute("aria-expanded", DB.verCadeia ? "true" : "false");
     const alvo = view.querySelector("#cadeiaBox");
     if(alvo) alvo.classList.toggle("hide", !DB.verCadeia);
   }));
-  view.querySelectorAll("[data-placar]").forEach(b => b.addEventListener("click", ()=> modalPlacar(b.dataset.placar)));
+  view.querySelectorAll("[data-placar]").forEach(b => {
+    const abrir = ()=> modalPlacar(b.dataset.placar);
+    b.addEventListener("click", abrir);
+    if(b.tagName !== "BUTTON") b.addEventListener("keydown", e => {
+      if(e.key==="Enter"||e.key===" "){ e.preventDefault(); abrir(); }
+    });
+  });
   view.querySelectorAll("[data-live]").forEach(b => b.addEventListener("click", ()=> modalAoVivo(b.dataset.live)));
 }
 function acao(a){

@@ -1,4 +1,4 @@
-const CACHE = "super8-v21";
+const CACHE = "super8-v22";
 const ARQUIVOS = ["./", "./index.html", "./manifest.webmanifest", "./icone-192.1mbtxnc.png", "./icone-512.1kjcukb.png"];
 self.addEventListener("install", e => {
   // busca ignorando o cache do navegador, senao a versao nova pode nem chegar

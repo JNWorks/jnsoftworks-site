@@ -338,6 +338,117 @@ mark.opc{background:var(--bola);color:#5A4000;padding:1px 6px;border-radius:6px;
 .atualiza button{background:var(--bola);color:#4A3600;font-weight:800;font-size:13px;
   padding:9px 14px;border-radius:10px;flex:none}
 .atualiza .fechar{background:transparent;color:rgba(255,255,255,.7);padding:9px 6px;font-size:16px}
+/* ---------- folha de uma página (exportar PDF) ----------
+   A folha tem tamanho fixo de A4 útil (733x1062 px a 96 dpi). O conteúdo é
+   medido depois de montado e encolhido por --fit até caber nessa altura, e
+   --prev encolhe de novo só na pré-visualização, para caber na tela. */
+#folha{display:none}
+#folha.ver{position:fixed;inset:0;z-index:75;overflow:auto;background:rgba(7,32,47,.72);
+  display:block;padding:12px 12px calc(96px + env(safe-area-inset-bottom))}
+#folha .papel{margin:0 auto;background:#fff;border-radius:6px;overflow:hidden;
+  box-shadow:0 18px 50px -16px rgba(0,0,0,.7)}
+#folha .pgwrap{transform-origin:top left;transform:scale(var(--prev,1));overflow:hidden;margin:0 auto}
+#folha .barra{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));
+  max-width:696px;margin:0 auto;display:flex;gap:8px}
+#folha .barra button{flex:1;border-radius:12px;padding:13px 10px;font-weight:800;font-size:14.5px;
+  box-shadow:0 10px 26px -10px rgba(0,0,0,.7)}
+#folha .barra .fechar{background:var(--superf);color:var(--texto);border:1px solid var(--borda)}
+#folha .barra .imprimir{background:var(--laranja);color:#fff}
+#folha .dicaimp{max-width:696px;margin:10px auto 0;color:#DDEEF8;font-size:12px;line-height:1.4;text-align:center}
+#folha .dicaimp b{color:#fff}
+
+.pg{width:733px;flex:none;background:#fff;color:#0B3A5B;font-family:var(--f-body);
+  font-size:10.5px;line-height:1.32;padding:16px 18px 12px;transform-origin:top left;
+  transform:scale(var(--fit,1));-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.pg *{box-sizing:border-box}
+/* a folha é sempre preta no branco: zera o que o tema (e o CSS do app) pintam */
+.pg table{width:auto;font-size:inherit;border-collapse:collapse}
+.pg tbody tr:nth-child(even),.pg tbody tr.top1 td,.pg tbody tr.top2 td{background:none}
+.pg th,.pg td{padding:0;background:none;color:inherit;font-size:inherit;font-weight:400;
+  letter-spacing:normal;text-transform:none;min-width:0;white-space:nowrap}
+.pg b{font-weight:800}
+.pg .cab{display:flex;align-items:flex-start;gap:10px;border-bottom:2px solid #0B3A5B;padding-bottom:8px}
+.pg .cab .bola{flex:none;width:30px;height:30px;border-radius:50%;background:var(--bola-img);margin-top:1px}
+.pg .cab .tit{flex:1;min-width:0}
+.pg .cab .eyebrow{font-size:8.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#4E7590}
+.pg .cab h1{font-family:var(--f-disp);font-size:21px;line-height:1.05;margin:1px 0 0;color:#0B3A5B}
+.pg .cab .data{flex:none;text-align:right;font-size:9px;font-weight:700;color:#4E7590;padding-top:3px}
+.pg .chips{display:flex;flex-wrap:wrap;gap:4px;margin:7px 0 2px}
+.pg .chips span{border:1px solid #D8BC85;background:#FFF6E4;border-radius:99px;
+  padding:1.5px 7px;font-size:9px;font-weight:700}
+.pg h2{font-family:var(--f-disp);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;
+  color:#0B3A5B;margin:11px 0 5px;padding-bottom:2px;border-bottom:1px solid #D8BC85}
+.pg .duo{display:flex;gap:14px;align-items:flex-start}
+.pg .duo>*{min-width:0}
+
+.pg .fjogos{column-gap:14px}
+.pg .fjogos.c2{column-count:2}
+.pg .fjogos.c3{column-count:3}
+.pg .frod{break-inside:avoid;page-break-inside:avoid;margin-bottom:5px}
+.pg .frodt{font-weight:800;font-size:9.5px;background:#EFDCB4;border-radius:3px;padding:1px 5px;margin-bottom:2px}
+.pg .frodt span{font-weight:600;color:#5B4520}
+.pg .fjogos table{width:100%;border-collapse:collapse;table-layout:fixed}
+.pg .fjogos td{border-bottom:1px solid #E6D7B8;padding:1.5px 2px;font-size:9.5px;vertical-align:middle;
+  white-space:nowrap}
+.pg .fjogos .ea,.pg .fjogos .eb{white-space:normal;overflow-wrap:break-word;line-height:1.15}
+.pg .fjogos .nj{width:16px;color:#4E7590;font-weight:700;text-align:right}
+.pg .fjogos .qd{width:20px;color:#0B7FAE;font-weight:800;text-align:center;font-size:8.5px}
+.pg .fjogos .ea{text-align:right}
+.pg .fjogos .eb{text-align:left}
+.pg .fjogos .w{font-weight:800}
+.pg .fjogos .pa,.pg .fjogos .pb{width:17px;text-align:center;font-weight:800;
+  background:#FBF4E3;box-shadow:inset 0 0 0 1px #E2D0A8}
+.pg .fjogos .px{width:9px;text-align:center;color:#9AAFBD;font-size:8px}
+
+.pg table.fpl{width:100%;border-collapse:collapse;table-layout:fixed}
+.pg table.fpl th,.pg table.fpl td{border:1px solid #D8BC85;padding:1.5px 2px;text-align:center;
+  font-size:9.5px;white-space:nowrap}
+.pg table.fpl th{background:#0B3A5B;color:#fff;font-weight:800;font-size:8.5px}
+.pg table.fpl th.nm,.pg table.fpl td.nm{text-align:left;width:26%;padding-left:5px;
+  white-space:normal;overflow-wrap:break-word;line-height:1.15}
+.pg table.fpl td.nm .num{color:#4E7590;font-weight:700;margin-right:4px}
+.pg table.fpl td.w{background:#FFE9DB;font-weight:800}
+.pg table.fpl td.fg{color:#B9A377}
+.pg table.fpl th.tt,.pg table.fpl td.tt{width:34px;background:#FFF6E4;font-weight:800}
+.pg table.fpl th.tt{background:#0B3A5B}
+
+.pg table.fcl{width:100%;border-collapse:collapse}
+.pg table.fcl th,.pg table.fcl td{border-bottom:1px solid #E6D7B8;padding:1.5px 3px;text-align:center;font-size:9.5px}
+.pg table.fcl th{background:#EFDCB4;font-weight:800;font-size:8.5px}
+.pg table.fcl th.nm,.pg table.fcl td.nm{text-align:left;white-space:normal;overflow-wrap:break-word;line-height:1.15}
+.pg table.fcl td.ps{width:22px;font-weight:800;color:#4E7590}
+.pg table.fcl tr.t1 td{background:#FFF3C4;font-weight:700}
+
+.pg ol.fcrit{margin:0;padding:0;list-style:none;columns:2;column-gap:14px;font-size:9.5px}
+.pg ol.fcrit li{break-inside:avoid;padding:1px 0}
+.pg ol.fcrit li b{color:#4E7590;margin-right:3px}
+.pg ol.fcrit li i{color:#4E7590;font-style:normal;font-size:8.5px}
+.pg ol.fcrit li.some{color:#9AAFBD;text-decoration:line-through}
+.pg ol.fcrit li.some i{text-decoration:none}
+.pg .fnota{font-size:8.8px;color:#4E7590;margin:5px 0 0;line-height:1.3}
+.pg .frodape{margin-top:9px;padding-top:6px;border-top:1px solid #D8BC85;
+  display:flex;gap:8px;align-items:baseline;font-size:8.5px;color:#4E7590}
+.pg .frodape .marca{margin-left:auto;font-weight:800;color:#0B3A5B;white-space:nowrap}
+.pg .fchave{display:flex;gap:10px;align-items:flex-start}
+.pg .fchave .bc{flex:1;min-width:0}
+.pg .fchave .bc h3{font-size:8.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+  color:#4E7590;margin:0 0 3px}
+.pg .fchave .bm{border:1px solid #D8BC85;border-radius:4px;margin-bottom:4px;overflow:hidden}
+.pg .fchave .bt{display:flex;gap:4px;padding:2px 4px;font-size:9px;border-bottom:1px solid #EFDCB4}
+.pg .fchave .bt:last-child{border-bottom:none}
+.pg .fchave .bt .g{flex:1;min-width:0;white-space:normal;overflow-wrap:break-word;line-height:1.15}
+.pg .fchave .bt.w{background:#FFF3C4;font-weight:800}
+
+@media print{
+  @page{size:A4 portrait;margin:8mm}
+  html,body{background:#fff!important;padding:0!important}
+  body>*{display:none!important}
+  body>#folha.ver{display:block!important;position:static!important;inset:auto;
+    padding:0!important;background:none!important;overflow:visible!important}
+  #folha .papel{width:auto!important;height:auto!important;border-radius:0;box-shadow:none;margin:0}
+  #folha .pgwrap{transform:none!important}
+  #folha .barra,#folha .dicaimp{display:none!important}
+}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 
@@ -365,6 +476,7 @@ mark.opc{background:var(--bola);color:#5A4000;padding:1px 6px;border-radius:6px;
     <span class="ic" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 3.5h12v13H4z"/><path d="M7 7h6M7 10h6M7 13h4"/></svg></span>Regras</button>
 </nav>
 
+<div id="folha" aria-hidden="true"></div>
 <div id="modais"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
@@ -396,6 +508,17 @@ function carregar(){
     if(t.modo === "mata" || t.cfg.qeq) return;
     if(!todosJogos(t).some(j => j.done || j.live)) equilibrarQuadras(t);
     t.cfg.qeq = 1; mudou = true;
+  });
+  /* rodízios montados antes da correção têm jogo de menos: o número de quadras
+     cortava jogos da rodada em vez de só espalhá-los em levas. Refaz a chave,
+     mas só a de quem ainda não jogou nada — quem já começou fica como está. */
+  DB.torneios.forEach(t => {
+    if(t.cfg.gfix) return;
+    t.cfg.gfix = 1; mudou = true;
+    if(t.modo !== "rodizio" || !t.rodadas.length) return;
+    if(todosJogos(t).some(j => j.done || j.live)) return;
+    if(Math.max.apply(null, t.rodadas.map(r => r.jogos.length)) >= jogosPorRodada(t.parts.length)) return;
+    gerarChave(t); t.rodadaAtual = 1;
   });
   if(mudou) salvar();
 }
@@ -457,7 +580,13 @@ function emparelhar(lista){
   }
   return out;
 }
-function rodizioUmaVez(n, quadras, maxRodadas, perm){
+/* quantos jogos cabem numa rodada do rodízio: as duplas da rodada, aos pares
+   (com número ímpar de atletas uma dupla sai, e com ímpar de duplas sobra uma) */
+function jogosPorRodada(n){
+  const duplas = n%2===0 ? n/2 : (n+1)/2 - 1;
+  return Math.floor(duplas/2);
+}
+function rodizioUmaVez(n, maxRodadas, perm){
   const M = n%2===0 ? n : n+1, FANTASMA = n;
   const base = circulo(M);
   const total = Math.min(maxRodadas || M-1, M-1);
@@ -467,7 +596,7 @@ function rodizioUmaVez(n, quadras, maxRodadas, perm){
   for(let r=0;r<total;r++){
     const duplas = base[r].map(p => [p[0]===FANTASMA?FANTASMA:perm[p[0]], p[1]===FANTASMA?FANTASMA:perm[p[1]]])
                           .filter(p => p[0]!==FANTASMA && p[1]!==FANTASMA);
-    const cap = Math.min(quadras, Math.floor(duplas.length/2));
+    const cap = Math.floor(duplas.length/2);
     let melhor = null, melhorCusto = Infinity;
     if(cap>0){
       const idx = duplas.map((_,i)=>i);
@@ -501,14 +630,14 @@ function rodizioUmaVez(n, quadras, maxRodadas, perm){
   const advMax = Math.max(0, ...Object.values(adv));
   return { rodadas: saida, jogou, folga, nota: repetidas*10000 + amplitude*100 + advMax };
 }
-function gerarRodizio(n, quadras, maxRodadas, tentativas){
+function gerarRodizio(n, maxRodadas, tentativas){
   let melhor = null;
   tentativas = tentativas || 30;
   for(let t=0;t<tentativas;t++){
     const perm = Array.from({length:n},(_,i)=>i);
     if(t>0) for(let i=perm.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); const tmp=perm[i]; perm[i]=perm[j]; perm[j]=tmp; }
     const inv = new Array(n); perm.forEach((v,i)=>{ inv[v]=i; });
-    const R = rodizioUmaVez(n, quadras, maxRodadas, inv);
+    const R = rodizioUmaVez(n, maxRodadas, inv);
     if(!melhor || R.nota < melhor.nota) melhor = R;
     if(melhor.nota === 0) break;
   }
@@ -785,6 +914,15 @@ function equilibrarQuadras(t){
     return s + resto*(base+1)*(base+1) + (Q-resto)*base*base;
   }, 0);
 
+  /* as quadras de uma rodada: cada uma repetida tantas vezes quantas levas de
+     jogos a rodada tiver, para uma sobrar no máximo uma vez a mais que a outra */
+  const vagas = g => {
+    const base = Math.floor(g/Q), resto = g%Q, out = [];
+    for(let q=0;q<Q;q++) for(let k=0;k<base+(q<resto?1:0);k++) out.push(q);
+    return out;
+  };
+  const quantos = (pl,q) => { let c = 0; for(const x of pl) if(x === q) c++; return c; };
+
   const cont = [];
   for(let i=0;i<nP;i++) cont.push(new Array(Q).fill(0));
   const poe = (g,q,d) => { for(const p of g) cont[p][q] += d; };
@@ -803,7 +941,7 @@ function equilibrarQuadras(t){
 
     /* 1) primeira distribuição: cada jogo pega a quadra menos usada pelos seus */
     rodadas.forEach((r, ri) => {
-      const livres = Array.from({length:Q},(_,q)=>q);
+      const livres = vagas(r.length);
       const ordem = r.map((_,i)=>i);
       if(tent > 0){ baralha(ordem); baralha(livres); }
       ordem.forEach(gi => {
@@ -830,7 +968,7 @@ function equilibrarQuadras(t){
         const r = rodadas[ri], pl = plano[ri];
         for(let i=0;i<r.length;i++){
           for(let q=0;q<Q;q++){
-            if(q === pl[i] || pl.indexOf(q) >= 0) continue;
+            if(q === pl[i] || quantos(pl,q) >= quantos(pl,pl[i])) continue;
             const d = delta(r[i], pl[i], q);
             if(aceita(d)){ poe(r[i], pl[i], -1); poe(r[i], q, 1); pl[i] = q; custo += d; if(d < 0) mexeu = true; }
           }
@@ -851,16 +989,21 @@ function equilibrarQuadras(t){
 
   t.rodadas.forEach((r, ri) => {
     r.jogos.forEach((j, i) => { j.quadra = melhor[ri][i] + 1; });
-    r.jogos.sort((x,y) => x.quadra - y.quadra);   /* na tela, na ordem das quadras */
+    /* na tela: primeiro a leva que ocupa todas as quadras, depois a seguinte */
+    const usos = {};
+    const marcado = r.jogos.map(j => ({ j, onda: (usos[j.quadra] = (usos[j.quadra]||0) + 1) }));
+    marcado.sort((x,y) => (x.onda - y.onda) || (x.j.quadra - y.j.quadra));
+    r.jogos = marcado.map(x => x.j);
   });
 }
 function gerarChave(t){
   const n = t.parts.length;
+  const Q = Math.max(1, Math.round(+t.cfg.quadras) || 1);
   if(t.modo === "rodizio"){
-    const R = gerarRodizio(n, t.cfg.quadras, t.cfg.rodadas);
+    const R = gerarRodizio(n, t.cfg.rodadas);
     t.rodadas = R.rodadas.map((r,i) => ({
       n: i+1,
-      jogos: r.jogos.map((m,q) => ({ id:uid(), quadra:q+1, a:m[0].map(x=>t.parts[x].id), b:m[1].map(x=>t.parts[x].id), ga:null, gb:null, done:false })),
+      jogos: r.jogos.map((m,q) => ({ id:uid(), quadra:(q%Q)+1, a:m[0].map(x=>t.parts[x].id), b:m[1].map(x=>t.parts[x].id), ga:null, gb:null, done:false })),
       folgados: r.folgados.map(x => t.parts[x].id)
     }));
     t.chave = null;
@@ -868,7 +1011,7 @@ function gerarChave(t){
     const R = gerarTodosContraTodos(n, t.cfg.quadras);
     t.rodadas = R.rodadas.map((r,i) => ({
       n: i+1,
-      jogos: r.jogos.map((m,q) => ({ id:uid(), quadra:q+1, a:m[0].map(x=>t.parts[x].id), b:m[1].map(x=>t.parts[x].id), ga:null, gb:null, done:false })),
+      jogos: r.jogos.map((m,q) => ({ id:uid(), quadra:(q%Q)+1, a:m[0].map(x=>t.parts[x].id), b:m[1].map(x=>t.parts[x].id), ga:null, gb:null, done:false })),
       folgados: r.folgados.map(x => t.parts[x].id)
     }));
     t.chave = null;
@@ -937,7 +1080,9 @@ document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click
   DB.tab = b.dataset.tab; salvar(); render();
 }));
 document.addEventListener("keydown", e => {
-  if(e.key === "Escape" && modais.firstChild) fecharModal();
+  if(e.key !== "Escape") return;
+  if(folha.classList.contains("ver")) return fecharFolha();
+  if(modais.firstChild) fecharModal();
 });
 
 /* o espaço livre depende da fonte carregada e das áreas seguras do aparelho, então é medido */
@@ -1035,8 +1180,11 @@ function telaChave(){
     h += '<button class="pill'+(x.n===t.rodadaAtual?' on':'')+'" data-rodada="'+x.n+'" style="flex:none">R'+x.n+(completa?' ✓':'')+'</button>';
   });
   h += '</div></div>';
+  const Q = Math.max(1, +t.cfg.quadras || 1), levas = Math.ceil(r.jogos.length / Q);
   h += '<div class="sec"><h2>Rodada '+r.n+' de '+rs.length+'</h2>';
-  r.jogos.forEach(j => { h += cardJogo(t,j); });
+  if(levas > 1) h += '<div class="bye">⏱ <span>Esta rodada tem '+r.jogos.length+' jogos para '+Q+' quadra'+(Q>1?'s':'')
+    + ': eles acontecem em '+levas+' levas, uma depois da outra.</span></div>';
+  r.jogos.forEach((j,i) => { h += cardJogo(t, j, levas > 1 ? Math.floor(i/Q)+1 : 0); });
   if(r.folgados.length) h += '<div class="bye">💤 <span><b>Descansa:</b> '+esc(r.folgados.map(id=>nomeDe(t,id)).join(", "))+'</span></div>';
   h += '<div class="row" style="margin-top:12px">'
     +  '<button class="btn grow" data-acao="rodada-ant"'+(t.rodadaAtual<=1?' disabled':'')+'>← Anterior</button>'
@@ -1103,11 +1251,11 @@ function tabelaJogos(t){
   if(nota) h += '<p class="small muted" style="margin-top:6px">' + nota + '</p>';
   return h;
 }
-function cardJogo(t,j){
+function cardJogo(t,j,leva){
   const A = nomesLado(t,j.a), B = nomesLado(t,j.b);
   const feito = j.done && j.ga!=null;
   return '<div class="jogo">'
-    + '<div class="cab"><span>Quadra '+j.quadra+'</span><span class="grow"></span>'
+    + '<div class="cab"><span>Quadra '+j.quadra+(leva ? ' · '+leva+'ª leva' : '')+'</span><span class="grow"></span>'
     +   (feito ? '<span class="tag ok">encerrado</span>' : (j.live ? '<span class="tag bola">ao vivo</span>' : '<span class="tag ceu">a jogar</span>'))+'</div>'
     + '<div class="quadra"><div class="lado"><div class="nome">'+esc(A)+'</div></div><div class="rede"></div>'
     +   '<div class="lado dir"><div class="nome">'+esc(B)+'</div></div></div>'
@@ -1127,6 +1275,7 @@ function blocoAjustes(t){
     + '<button class="btn sm" data-acao="renomear">Renomear</button>'
     + '<button class="btn sm" data-acao="participantes">Participantes</button>'
     + (t.modo!=="mata" ? '<button class="btn sm" data-acao="sortear">Sortear de novo</button>' : '')
+    + '<button class="btn sm" data-acao="pdf">Exportar PDF</button>'
     + '<button class="btn sm danger" data-acao="excluir">Excluir</button>'
     + '</div></div></div>';
 }
@@ -1282,7 +1431,9 @@ function telaClassificacao(){
     +  '<div id="cadeiaBox" class="'+(DB.verCadeia?"":"hide")+'" style="margin-top:10px">'+cadeiaHTML(t)
     +    (t.modo!=="mata" ? '<button class="btn sm blk" data-acao="desempate" style="margin-top:12px">Reorganizar desempates</button>' : '')
     +  '</div></div>';
-  h += '<button class="btn azul blk" data-acao="compartilhar" style="margin-top:12px">Compartilhar classificação</button></div>';
+  h += '<div class="row" style="margin-top:12px">'
+    +  '<button class="btn azul grow" data-acao="compartilhar">Compartilhar</button>'
+    +  '<button class="btn grow" data-acao="pdf">Exportar PDF</button></div></div>';
   return h;
 }
 
@@ -1319,11 +1470,13 @@ function regulamentoPadrao(t){
   linhas.push("## Formato");
   if(t.modo === "rodizio"){
     linhas.push(n+" atletas jogam individualmente, mas as duplas mudam a cada rodada — ninguém repete parceiro enquanto houver combinação nova.");
-    linhas.push("- Rodadas: "+t.rodadas.length+"  ·  Quadras simultâneas: "+c.quadras);
+    linhas.push("- Rodadas: "+t.rodadas.length+"  ·  Jogos: "+totalDeJogos(t)+"  ·  Quadras simultâneas: "+c.quadras);
     linhas.push("- Quem descansa na rodada está indicado na chave.");
+    const porRodada = Math.max(...t.rodadas.map(r => r.jogos.length), 0);
+    if(porRodada > c.quadras) linhas.push("- Cada rodada tem mais jogos que quadras, então os jogos da rodada saem em levas, uma depois da outra.");
   } else if(t.modo === "duplas"){
     linhas.push(n+" duplas fixas, todos contra todos.");
-    linhas.push("- Rodadas: "+t.rodadas.length+"  ·  Quadras simultâneas: "+c.quadras);
+    linhas.push("- Rodadas: "+t.rodadas.length+"  ·  Jogos: "+totalDeJogos(t)+"  ·  Quadras simultâneas: "+c.quadras);
   } else {
     linhas.push(n+" duplas em chave eliminatória simples. Quem perde está fora.");
     linhas.push("- Duplas sorteadas em posição ímpar avançam direto quando a chave tem bye.");
@@ -1374,6 +1527,7 @@ const COMO_FUNCIONA = [
 "- 4, 8, 12 e 16 atletas: rodízio perfeito — todo mundo joga todas as rodadas e ninguém repete parceiro.",
 "- Outros números: o app equilibra os descansos, distribuindo as folgas do jeito mais justo possível, e ainda assim ninguém repete parceiro.",
 "- Você também pode reduzir o número de rodadas quando o tempo for curto.",
+"- O número de quadras não muda a chave: com menos quadras os jogos da rodada saem em levas, uma depois da outra, e cada atleta joga a mesma quantidade de vezes.",
 "",
 "## Como se pontua",
 "São dois critérios principais, e escolher um empurra o outro para o desempate.",
@@ -1399,6 +1553,235 @@ const COMO_FUNCIONA = [
 "- O saque é direto, sem quique, e o adversário não pode devolver antes de a bola cruzar a rede.",
 "- Regras oficiais: ITF e Confederação Brasileira de Tênis (CBT)."
 ].join("\n");
+
+/* ---------------- folha de uma página (exportar PDF) ----------------
+   O navegador é quem vira PDF (Imprimir → Salvar como PDF), então não entra
+   biblioteca nenhuma: a folha é HTML normal, com A4 útil de 733x1062 px a
+   96 dpi. Monta, mede a altura real e encolhe até caber numa página só. */
+const FOLHA_L = 733, FOLHA_A = 1062, FOLHA_UTIL = 1046;
+const folha = $("#folha");
+
+function folhaData(t){
+  const d = new Date(t.criado || Date.now());
+  const dd = x => (x<10?"0":"")+x;
+  return dd(d.getDate())+"/"+dd(d.getMonth()+1)+"/"+d.getFullYear();
+}
+function folhaCabecalho(t){
+  const c = t.cfg, nj = totalDeJogos(t), chips = [];
+  chips.push(t.parts.length + (t.modo==="rodizio" ? " atletas" : " duplas"));
+  if(t.modo !== "mata") chips.push(t.rodadas.length + (t.rodadas.length===1 ? " rodada" : " rodadas"));
+  chips.push(nj + (nj===1 ? " jogo" : " jogos"));
+  if(t.modo !== "mata") chips.push(c.quadras + (c.quadras>1 ? " quadras" : " quadra"));
+  chips.push(c.games + (c.games>1 ? " games por jogo" : " game por jogo"));
+  chips.push("ponto de ouro");
+  if(t.modo !== "mata") chips.push("classificação por " + criterioDe(t).curto);
+  return '<div class="cab"><div class="bola"></div>'
+    + '<div class="tit"><div class="eyebrow">Super N Beach Tennis · '+esc(MODOS[t.modo].nome)+'</div>'
+    +   '<h1>'+esc(t.nome)+'</h1></div>'
+    + '<div class="data">'+folhaData(t)+'</div></div>'
+    + '<div class="chips">'+chips.map(x=>'<span>'+esc(x)+'</span>').join("")+'</div>';
+}
+function folhaJogos(t){
+  /* o espaco fixo prende o nome inteiro: quando a linha quebra, ela quebra
+     antes do "+", nunca no meio de "Ana Beatriz" */
+  const FIXO = "\u00A0";
+  const nomes = ids => ids.map(id => nomeDe(t,id).split(" ").join(FIXO)).join(" +" + FIXO);
+  let n = 0, h = '<div class="fjogos c1">';
+  t.rodadas.forEach(r => {
+    h += '<div class="frod"><div class="frodt">Rodada '+r.n
+      + (r.folgados.length ? ' <span>· descansa: '+esc(r.folgados.map(id=>nomeDe(t,id)).join(", "))+'</span>' : '')
+      + '</div><table>';
+    r.jogos.forEach(j => {
+      n++;
+      const feito = j.done && j.ga != null;
+      h += '<tr><td class="nj">'+n+'</td><td class="qd">Q'+j.quadra+'</td>'
+        + '<td class="ea'+(feito && j.ga>j.gb ? ' w' : '')+'">'+esc(nomes(j.a))+'</td>'
+        + '<td class="pa">'+(feito ? j.ga : '')+'</td><td class="px">×</td>'
+        + '<td class="pb">'+(feito ? j.gb : '')+'</td>'
+        + '<td class="eb'+(feito && j.gb>j.ga ? ' w' : '')+'">'+esc(nomes(j.b))+'</td></tr>';
+    });
+    h += '</table></div>';
+  });
+  return h + '</div>';
+}
+function folhaPlanilha(t){
+  const rs = t.rodadas;
+  let h = '<table class="fpl"><thead><tr><th class="nm">'+(t.modo==="rodizio"?"Atleta":"Dupla")+'</th>'
+    + rs.map(r => '<th>R'+r.n+'</th>').join("") + '<th class="tt">Total</th></tr></thead><tbody>';
+  t.parts.forEach((p,i) => {
+    h += '<tr><td class="nm"><span class="num">'+((i+1<10?"0":"")+(i+1))+'</span>'+esc(p.nome)+'</td>';
+    let total = 0, lancou = false;
+    rs.forEach(r => {
+      const j = r.jogos.filter(x => x.a.indexOf(p.id) >= 0 || x.b.indexOf(p.id) >= 0)[0];
+      if(!j){ h += '<td class="fg">–</td>'; return; }
+      if(!j.done || j.ga == null){ h += '<td></td>'; return; }
+      const meuLado = j.a.indexOf(p.id) >= 0;
+      const meu = meuLado ? j.ga : j.gb, dele = meuLado ? j.gb : j.ga;
+      total += meu; lancou = true;
+      h += '<td class="'+(meu>dele ? "w" : "")+'">'+meu+'</td>';
+    });
+    h += '<td class="tt">'+(lancou ? total : '')+'</td></tr>';
+  });
+  return h + '</tbody></table>';
+}
+function folhaClassificacao(t){
+  const cls = calcularClassificacao(t), porGames = t.cfg.criterio !== "vitorias";
+  const cols = porGames ? ["GC","SG"] : ["GP","GC","SG"];
+  let h = '<table class="fcl"><thead><tr><th class="ps">#</th><th class="nm">'
+    + (t.modo==="rodizio"?"Atleta":"Dupla")+'</th><th>Pts</th><th>J</th><th>V</th><th>E</th><th>D</th>'
+    + cols.map(c => '<th>'+c+'</th>').join("")+'</tr></thead><tbody>';
+  cls.forEach(L => {
+    const extra = { GP:L.GP, GC:L.GC, SG:(L.SG>0?"+":"")+L.SG };
+    h += '<tr'+(L.pos===1?' class="t1"':'')+'><td class="ps">'+L.pos+'º</td><td class="nm">'+esc(L.nome)+'</td>'
+      + '<td><b>'+fmtPts(L.PTS)+'</b></td><td>'+L.J+'</td><td>'+L.V+'</td><td>'+L.E+'</td><td>'+L.D+'</td>'
+      + cols.map(c => '<td>'+extra[c]+'</td>').join("")+'</tr>';
+  });
+  return h + '</tbody></table>'
+    + '<p class="fnota">Pts = '+(porGames ? "games ganhos" : "1 por vitória, 0,5 por empate")
+    + ' · J/V/E/D = jogos, vitórias, empates, derrotas · GP/GC = games pró e contra · SG = saldo.</p>';
+}
+function folhaCriterios(t){
+  const cad = cadeiaDe(t), ativos = criteriosAtivos(t);
+  let h = '<ol class="fcrit">';
+  cad.forEach((k,i) => {
+    const d = CRIT_DEF[k]; if(!d) return;
+    const inativo = !ativos[k];
+    h += '<li'+(inativo ? ' class="some"' : '')+'><b>'+(i+1)+'.</b>'+esc(d.rot)
+      + (i===0 ? ' <i>— critério principal</i>' : '')
+      + (inativo ? ' <i>— fora nesta chave</i>' : '')+'</li>';
+  });
+  h += '</ol>';
+  h += '<p class="fnota">Empate no critério 1 vai para o 2, e assim por diante. <b>Confronto direto</b> olha só '
+    +  'os jogos entre os empatados e é recalculado dentro de cada empate. Os critérios de <b>games</b> só valem '
+    +  'quando todos os jogos foram até os '+t.cfg.games+' games; os de <b>derrotas</b> valem quando algum jogo '
+    +  'terminou antes disso — um grupo liga quando o outro desliga.</p>';
+  return h;
+}
+function folhaMataMata(t){
+  const rods = t.chave.rodadas;
+  const nomeRodada = i => {
+    const faltam = rods.length - 1 - i;
+    return faltam===0 ? "Final" : faltam===1 ? "Semifinal" : faltam===2 ? "Quartas" : faltam===3 ? "Oitavas" : "Rodada "+(i+1);
+  };
+  let h = '<div class="fchave">';
+  rods.forEach((r,i) => {
+    h += '<div class="bc"><h3>'+nomeRodada(i)+'</h3>';
+    r.forEach(m => {
+      const lado = (id,sc,venc) => '<div class="bt'+(venc?' w':'')+'"><span class="g">'
+        + (id ? esc(nomeDe(t,id)) : "—")+'</span><span>'+(sc==null?"":sc)+'</span></div>';
+      const vA = m.done && m.a && m.b && m.ga > m.gb, vB = m.done && m.a && m.b && m.gb > m.ga;
+      h += '<div class="bm">'+lado(m.a, m.ga, vA || (m.a && !m.b))+lado(m.b, m.gb, vB || (!m.a && m.b))+'</div>';
+    });
+    h += '</div>';
+  });
+  return h + '</div>';
+}
+function folhaHTML(t){
+  const jogados = todosJogos(t).filter(j => j.done).length;
+  let h = '<div class="pg">' + folhaCabecalho(t);
+  if(t.modo === "mata"){
+    h += '<h2>Chave</h2>' + folhaMataMata(t);
+    if(jogados) h += '<h2>Classificação</h2>' + folhaClassificacao(t);
+  } else {
+    h += '<h2>Tabela de jogos</h2>' + folhaJogos(t);
+    h += '<h2>Planilha por rodada · games ganhos</h2>' + folhaPlanilha(t);
+    if(jogados) h += '<h2>Classificação · '+jogados+' de '+totalDeJogos(t)+' jogos</h2>' + folhaClassificacao(t);
+    h += '<h2>Critérios de classificação e desempate</h2>' + folhaCriterios(t);
+  }
+  h += '<div class="frodape"><span>'+esc(textoRegraFim(t))
+    +  ' Contagem 15/30/40 com ponto de ouro: no 40-40 o próximo ponto decide.</span>'
+    +  '<span class="marca">Super N · jnsoftworks.com/supern</span></div>';
+  return h + '</div>';
+}
+/* Ninguém quer súmula com letra de bula nem meia página em branco, então a
+   folha é montada várias vezes — em algumas larguras e com a tabela de jogos
+   em 1, 2 ou 3 colunas — e fica a combinação que permite a maior ampliação
+   sem estourar a página nem cortar nome nenhum. Montar estreito e ampliar é
+   o que deixa a letra crescer: a folha final tem sempre a largura do A4. */
+const FOLHA_LARGS = [1000, 920, 850, 790, 733, 680, 620, 570, 520, 470, 430];
+function folhaCortou(pg){
+  const cels = pg.querySelectorAll(".fjogos .ea, .fjogos .eb, table.fpl td.nm, table.fcl td.nm, .fchave .g");
+  for(let i=0;i<cels.length;i++) if(cels[i].scrollWidth > cels[i].clientWidth + 1) return true;
+  return false;
+}
+function melhorFolha(pg){
+  const jogos = pg.querySelector(".fjogos");
+  const colunas = jogos ? [1,2,3] : [0];
+  let melhor = null;
+  colunas.forEach(c => {
+    if(jogos) jogos.className = "fjogos c" + c;
+    FOLHA_LARGS.forEach(L => {
+      pg.style.width = L + "px";
+      pg.style.setProperty("--fit", 1);
+      if(folhaCortou(pg)) return;
+      const fit = Math.min(FOLHA_L / L, FOLHA_UTIL / pg.scrollHeight);
+      if(!melhor || fit > melhor.fit + 0.001) melhor = { larg:L, cols:c, fit:fit };
+    });
+  });
+  if(!melhor){
+    if(jogos) jogos.className = "fjogos c1";
+    pg.style.width = FOLHA_L + "px";
+    pg.style.setProperty("--fit", 1);
+    melhor = { larg:FOLHA_L, cols:1, fit:Math.min(1, FOLHA_UTIL / pg.scrollHeight) };
+  }
+  if(jogos) jogos.className = "fjogos c" + melhor.cols;
+  pg.style.width = melhor.larg + "px";
+  pg.style.setProperty("--fit", melhor.fit);
+  melhor.alto = pg.scrollHeight;
+  return melhor;
+}
+/* --fit encolhe (ou amplia) para caber na página; --prev encolhe de novo,
+   só na pré-visualização, para caber na tela do aparelho */
+function ajustarFolha(){
+  if(!folha.classList.contains("ver")) return;
+  const pg = folha.querySelector(".pg"), wrap = folha.querySelector(".pgwrap"),
+        papel = folha.querySelector(".papel");
+  if(!pg) return;
+  wrap.style.width = wrap.style.height = "auto";
+  const m = melhorFolha(pg);
+  const larg = Math.min(FOLHA_L, Math.ceil(m.larg * m.fit));
+  const alto = Math.min(FOLHA_A, Math.ceil(m.alto * m.fit) + 4);
+  wrap.style.width = larg + "px";
+  wrap.style.height = alto + "px";
+  const prev = Math.min(1, (folha.clientWidth - 24) / larg);
+  wrap.style.setProperty("--prev", prev);
+  papel.style.width = Math.round(larg * prev) + "px";
+  papel.style.height = Math.round(alto * prev) + "px";
+}
+let tituloAntes = null;
+function fecharFolha(){
+  folha.classList.remove("ver");
+  folha.innerHTML = "";
+  folha.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
+  if(tituloAntes != null){ document.title = tituloAntes; tituloAntes = null; }
+}
+function abrirFolha(){
+  const t = ativo();
+  if(!t) return;
+  folha.innerHTML = '<div class="papel"><div class="pgwrap">'+folhaHTML(t)+'</div></div>'
+    + '<p class="dicaimp">Uma página só, pronta para imprimir ou salvar em PDF. '
+    +   'No Android, escolha <b>Salvar como PDF</b> na tela de impressão; '
+    +   'no iPhone, use <b>Compartilhar → Imprimir</b> e depois compartilhe o PDF.</p>'
+    + '<div class="barra"><button class="fechar" id="fhFechar">Fechar</button>'
+    + '<button class="imprimir" id="fhImprimir">Imprimir / Salvar PDF</button></div>';
+  folha.classList.add("ver");
+  folha.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+  /* o nome que o navegador sugere para o arquivo é o título da página */
+  if(tituloAntes == null) tituloAntes = document.title;
+  document.title = t.nome + " — súmula";
+  folha.querySelector("#fhFechar").addEventListener("click", fecharFolha);
+  folha.querySelector("#fhImprimir").addEventListener("click", ()=>{
+    ajustarFolha();
+    setTimeout(()=>{ try{ window.print(); }catch(e){ toast("Use o menu do navegador → Imprimir"); } }, 60);
+  });
+  ajustarFolha();
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(ajustarFolha);
+  setTimeout(ajustarFolha, 120);
+}
+let folhaT = null;
+window.addEventListener("resize", ()=>{ clearTimeout(folhaT); folhaT = setTimeout(ajustarFolha, 150); });
 
 /* ---------------- ações ---------------- */
 function ligarAcoes(){
@@ -1466,6 +1849,7 @@ function acao(a){
   if(a === "editar-regras") return modalRegras();
   if(a === "reset-regras"){ t.regras = null; salvar(); render(); toast("Regulamento padrão restaurado"); return; }
   if(a === "compartilhar") return compartilhar();
+  if(a === "pdf") return abrirFolha();
   if(a === "exportar"){
     copiar(JSON.stringify(DB.torneios));
     return;

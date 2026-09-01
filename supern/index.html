@@ -1743,7 +1743,10 @@ function ajustarFolha(){
   const alto = Math.min(FOLHA_A, Math.ceil(m.alto * m.fit) + 4);
   wrap.style.width = larg + "px";
   wrap.style.height = alto + "px";
-  const prev = Math.min(1, (folha.clientWidth - 24) / larg);
+  /* piso de 240 px: numa janela estreitissima a conta daria escala negativa,
+     e a folha sumia em vez de so ficar pequena */
+  const cabe = Math.max(240, (folha.clientWidth || window.innerWidth || 360) - 24);
+  const prev = Math.min(1, cabe / larg);
   wrap.style.setProperty("--prev", prev);
   papel.style.width = Math.round(larg * prev) + "px";
   papel.style.height = Math.round(alto * prev) + "px";

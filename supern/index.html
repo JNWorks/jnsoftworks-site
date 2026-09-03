@@ -512,6 +512,14 @@ function carregar(){
   /* rodízios montados antes da correção têm jogo de menos: o número de quadras
      cortava jogos da rodada em vez de só espalhá-los em levas. Refaz a chave,
      mas só a de quem ainda não jogou nada — quem já começou fica como está. */
+  /* as levas nasceram sem revezamento: quem jogava a primeira jogava sempre a
+     primeira. Redistribui vagas (não mexe em quem joga com quem), e só de quem
+     ainda não começou, senão as quadras mudariam no meio do torneio. */
+  DB.torneios.forEach(t => {
+    if(t.modo === "mata" || t.cfg.leq) return;
+    t.cfg.leq = 1; mudou = true;
+    if(!todosJogos(t).some(j => j.done || j.live)) equilibrarQuadras(t);
+  });
   DB.torneios.forEach(t => {
     if(t.cfg.gfix) return;
     t.cfg.gfix = 1; mudou = true;
@@ -885,49 +893,69 @@ function criarTorneio(dados){
   gerarChave(t);
   return t;
 }
-/* ---------- distribuição das quadras ----------
-   Qual jogo da rodada vai para qual quadra não muda nada na chave — então as
-   quadras são escolhidas para que cada participante alterne o máximo possível
-   entre elas: com 2 quadras, metade dos jogos em cada uma; com 3, um terço em
-   cada; e assim por diante, arredondando quando não divide certo.
-   O critério é a soma dos quadrados dos jogos por quadra de cada um, que é
-   mínima justamente quando a repartição fica o mais igual possível. Nem sempre
-   dá para todo mundo ficar no ideal ao mesmo tempo — quem joga com quem em cada
-   rodada já está fechado —, daí a busca: várias distribuições sorteadas, cada
-   uma refinada por trocas, e no fim fica a melhor. */
+/* ---------- distribuição das vagas: quadra e leva ----------
+   Qual jogo da rodada vai para qual quadra, e em que ordem dentro da rodada,
+   não muda nada na chave — então os dois são escolhidos para que cada
+   participante alterne o máximo possível. Cada jogo ocupa uma vaga; a vaga diz
+   a quadra (resto por quadras) e a leva (divisão por quadras). Revezar as duas
+   importa: a quadra é onde se joga, a leva é quem joga primeiro e quem espera.
+   Com 2 quadras num Super 8 só existem quadras a revezar; com 1 quadra só
+   existem levas; com 12 atletas em 2 quadras existem as duas coisas.
+   O critério é a soma dos quadrados dos jogos por quadra e por leva de cada um,
+   que é mínima justamente quando as duas repartições ficam o mais iguais
+   possível. Nem sempre dá para todo mundo ficar no ideal ao mesmo tempo — quem
+   joga com quem em cada rodada já está fechado —, daí a busca: várias
+   distribuições sorteadas, cada uma refinada por trocas, e no fim fica a melhor. */
 function equilibrarQuadras(t){
   const Q = Math.max(1, Math.round(+t.cfg.quadras) || 1);
-  if(Q < 2 || !t.rodadas.length) return;
+  if(!t.rodadas.length) return;
   const idx = {};
   t.parts.forEach((p,i) => { idx[p.id] = i; });
   /* o algoritmo só precisa de quem joga cada jogo, não do jogo inteiro */
   const rodadas = t.rodadas.map(r => r.jogos.map(j => j.a.concat(j.b).map(id => idx[id]).filter(i => i != null)));
   const nP = t.parts.length;
+  const maiorRodada = rodadas.reduce((m,r) => Math.max(m, r.length), 0);
+  if(maiorRodada < 2) return;                       /* um jogo por rodada: nada a repartir */
+  const L = Math.ceil(maiorRodada / Q);
+  const quadraDe = v => v % Q, levaDe = v => Math.floor(v / Q);
 
-  /* soma de quadrados que existiria se cada um repartisse seus jogos exatamente
-     entre as quadras: é um piso, nem sempre alcançável, e serve para parar a
-     busca assim que ela chega lá */
-  const meus = new Array(nP).fill(0);
-  rodadas.forEach(r => r.forEach(g => g.forEach(i => { meus[i]++; })));
-  const ideal = meus.reduce((s,v) => {
-    const base = Math.floor(v/Q), resto = v%Q;
-    return s + resto*(base+1)*(base+1) + (Q-resto)*base*base;
-  }, 0);
-
-  /* as quadras de uma rodada: cada uma repetida tantas vezes quantas levas de
-     jogos a rodada tiver, para uma sobrar no máximo uma vez a mais que a outra */
+  /* as vagas de uma rodada: as levas cheias ocupam todas as quadras; a leva
+     incompleta oferece todas as quadras como candidatas, e sobram as que não
+     forem usadas — é o que deixa a busca escolher em quais quadras ela cai */
   const vagas = g => {
-    const base = Math.floor(g/Q), resto = g%Q, out = [];
-    for(let q=0;q<Q;q++) for(let k=0;k<base+(q<resto?1:0);k++) out.push(q);
+    const cheias = Math.floor(g/Q), resto = g%Q, out = [];
+    for(let w=0; w<cheias; w++) for(let q=0;q<Q;q++) out.push(w*Q + q);
+    if(resto) for(let q=0;q<Q;q++) out.push(cheias*Q + q);
     return out;
   };
-  const quantos = (pl,q) => { let c = 0; for(const x of pl) if(x === q) c++; return c; };
 
-  const cont = [];
-  for(let i=0;i<nP;i++) cont.push(new Array(Q).fill(0));
-  const poe = (g,q,d) => { for(const p of g) cont[p][q] += d; };
-  /* quanto a soma dos quadrados muda ao levar um jogo da quadra a para a b */
-  const delta = (g,a,b) => { let d = 0; for(const p of g) d += 2*(cont[p][b] - cont[p][a]) + 2; return d; };
+  /* soma de quadrados que existiria se cada um repartisse seus jogos exatamente
+     entre as quadras e entre as levas: é um piso, nem sempre alcançável, e
+     serve para parar a busca assim que ela chega lá */
+  const meus = new Array(nP).fill(0);
+  rodadas.forEach(r => r.forEach(g => g.forEach(i => { meus[i]++; })));
+  const piso = (v,k) => { const b = Math.floor(v/k), s = v%k; return s*(b+1)*(b+1) + (k-s)*b*b; };
+  const ideal = meus.reduce((s,v) => s + piso(v,Q) + piso(v,L), 0);
+
+  const cont = [], lev = [];
+  for(let i=0;i<nP;i++){ cont.push(new Array(Q).fill(0)); lev.push(new Array(L).fill(0)); }
+  const poe = (g,v,d) => {
+    const q = quadraDe(v), w = levaDe(v);
+    for(const p of g){ cont[p][q] += d; lev[p][w] += d; }
+  };
+  /* quanto a soma dos quadrados cresce ao pôr um jogo numa vaga vazia */
+  const entra = (g,v) => {
+    const q = quadraDe(v), w = levaDe(v);
+    let c = 0; for(const p of g) c += 2*cont[p][q] + 2*lev[p][w] + 2; return c;
+  };
+  /* quanto ela muda ao levar um jogo da vaga a para a b */
+  const delta = (g,a,b) => {
+    const qa = quadraDe(a), qb = quadraDe(b), wa = levaDe(a), wb = levaDe(b);
+    let d = 0;
+    if(qa !== qb) for(const p of g) d += 2*(cont[p][qb] - cont[p][qa]) + 2;
+    if(wa !== wb) for(const p of g) d += 2*(lev[p][wb] - lev[p][wa]) + 2;
+    return d;
+  };
   /* empates também passam, às vezes: o custo tem muitos platôs, e andar de lado
      neles é o que destrava as trocas que melhoram de verdade */
   const aceita = d => d < 0 || (d === 0 && Math.random() < 0.5);
@@ -936,41 +964,55 @@ function equilibrarQuadras(t){
   let melhor = null, melhorCusto = Infinity;
   for(let tent=0; tent<120 && melhorCusto > ideal; tent++){
     for(const c of cont) c.fill(0);
+    for(const c of lev) c.fill(0);
     const plano = rodadas.map(r => new Array(r.length).fill(0));
+    const sobra = [];
     let custo = 0;
 
-    /* 1) primeira distribuição: cada jogo pega a quadra menos usada pelos seus */
+    /* 1) primeira distribuição: cada jogo pega a vaga menos usada pelos seus */
     rodadas.forEach((r, ri) => {
+      const cheias = Math.floor(r.length/Q), resto = r.length%Q;
       const livres = vagas(r.length);
       const ordem = r.map((_,i)=>i);
       if(tent > 0){ baralha(ordem); baralha(livres); }
+      let naParcial = 0;
       ordem.forEach(gi => {
         const g = r[gi];
-        let escolha = 0, menor = Infinity;
-        livres.forEach((q,i) => {
-          let c = 0; for(const p of g) c += cont[p][q];
+        let escolha = -1, menor = Infinity;
+        livres.forEach((v,i) => {
+          /* a leva incompleta leva só o que sobra das cheias: sem isso ela
+             rouba jogos da primeira leva e a rodada deixa quadra vazia */
+          if(levaDe(v) === cheias && naParcial >= resto) return;
+          const c = entra(g,v);
           if(c < menor){ menor = c; escolha = i; }
         });
-        const q = livres.splice(escolha,1)[0];
-        plano[ri][gi] = q;
-        for(const p of g) custo += 2*cont[p][q] + 1;
-        poe(g, q, 1);
+        const v = livres.splice(escolha,1)[0];
+        if(levaDe(v) === cheias) naParcial++;
+        plano[ri][gi] = v;
+        custo += menor;
+        poe(g, v, 1);
       });
+      sobra.push(livres);
     });
 
     /* 2) refina olhando o torneio inteiro, e não só as rodadas já distribuídas:
-          troca as quadras de dois jogos da mesma rodada, ou move um jogo para
-          uma quadra que ficou vaga naquela rodada */
+          troca as vagas de dois jogos da mesma rodada, ou muda um jogo de
+          quadra dentro da própria leva. Mudar de leva só por troca: senão uma
+          leva encolhe, a outra cresce, e a rodada deixa de encher as quadras. */
     let parado = 0;
     for(let passo=0; passo<60; passo++){
       let mexeu = false;
       for(let ri=0; ri<rodadas.length; ri++){
-        const r = rodadas[ri], pl = plano[ri];
+        const r = rodadas[ri], pl = plano[ri], sb = sobra[ri];
         for(let i=0;i<r.length;i++){
-          for(let q=0;q<Q;q++){
-            if(q === pl[i] || quantos(pl,q) >= quantos(pl,pl[i])) continue;
-            const d = delta(r[i], pl[i], q);
-            if(aceita(d)){ poe(r[i], pl[i], -1); poe(r[i], q, 1); pl[i] = q; custo += d; if(d < 0) mexeu = true; }
+          for(let si=0; si<sb.length; si++){
+            if(levaDe(sb[si]) !== levaDe(pl[i])) continue;
+            const d = delta(r[i], pl[i], sb[si]);
+            if(aceita(d)){
+              poe(r[i], pl[i], -1); poe(r[i], sb[si], 1);
+              const antiga = pl[i]; pl[i] = sb[si]; sb[si] = antiga;
+              custo += d; if(d < 0) mexeu = true;
+            }
           }
           for(let k=i+1;k<r.length;k++){
             const a = pl[i], b = pl[k];
@@ -987,12 +1029,12 @@ function equilibrarQuadras(t){
     if(custo < melhorCusto){ melhorCusto = custo; melhor = plano.map(x => x.slice()); }
   }
 
+  /* na tela e na súmula, os jogos saem na ordem das vagas: primeiro a leva que
+     ocupa todas as quadras, depois a seguinte */
   t.rodadas.forEach((r, ri) => {
-    r.jogos.forEach((j, i) => { j.quadra = melhor[ri][i] + 1; });
-    /* na tela: primeiro a leva que ocupa todas as quadras, depois a seguinte */
-    const usos = {};
-    const marcado = r.jogos.map(j => ({ j, onda: (usos[j.quadra] = (usos[j.quadra]||0) + 1) }));
-    marcado.sort((x,y) => (x.onda - y.onda) || (x.j.quadra - y.j.quadra));
+    const marcado = r.jogos.map((j,i) => ({ j:j, v:melhor[ri][i] }));
+    marcado.sort((x,y) => x.v - y.v);
+    marcado.forEach(x => { x.j.quadra = quadraDe(x.v) + 1; });
     r.jogos = marcado.map(x => x.j);
   });
 }
@@ -1192,25 +1234,51 @@ function telaChave(){
   h += '</div>' + blocoAjustes(t);
   return h;
 }
-/* como as quadras ficaram divididas — o ideal nem sempre cabe na chave */
+/* como as quadras e as levas ficaram divididas — o ideal nem sempre cabe na chave */
 function notaQuadras(t){
-  const Q = t.cfg.quadras;
-  if(Q < 2) return "";
-  const cont = {};
-  t.parts.forEach(p => { cont[p.id] = new Array(Q).fill(0); });
-  t.rodadas.forEach(r => r.jogos.forEach(j => j.a.concat(j.b).forEach(id => { if(cont[id]) cont[id][j.quadra-1]++; })));
-  let fora = 0, pior = 0;
-  t.parts.forEach(p => {
-    const c = cont[p.id], v = c.reduce((a,b)=>a+b,0);
-    const piso = Math.floor(v/Q), teto = Math.ceil(v/Q);
-    let d = 0;
-    c.forEach(x => { d = Math.max(d, x - teto, piso - x); });
-    if(d > 0){ fora++; pior = Math.max(pior, d); }
-  });
-  const base = '<b>Quadras revezadas:</b> os jogos de cada rodada são distribuídos para todo mundo alternar de quadra o máximo possível';
-  if(fora === 0) return base + ' — nesta chave deu certo para todos (quando o número de jogos não divide pelas quadras, a sobra fica com uma delas).';
-  return base + ', mas com esta chave ' + (fora === 1 ? '1 participante ficou' : fora + ' participantes ficaram')
-    + ' com ' + (pior === 1 ? 'um jogo' : pior + ' jogos') + ' a mais numa quadra do que o ideal: foi a melhor divisão encontrada para esta chave.';
+  const Q = Math.max(1, Math.round(+t.cfg.quadras) || 1);
+  const L = t.rodadas.reduce((m,r) => Math.max(m, Math.ceil(r.jogos.length/Q)), 0);
+  if(Q < 2 && L < 2) return "";
+  const nP = t.parts.length;
+  /* o alvo de cada coluna são as cadeiras que ela oferece divididas pelos
+     participantes: a última leva costuma ter menos jogos que a primeira, então
+     o alvo dela é menor — não é meio a meio */
+  const mede = coluna => {
+    const meu = {}, cadeiras = [];
+    t.parts.forEach(p => { meu[p.id] = []; });
+    t.rodadas.forEach(r => r.jogos.forEach((j,i) => {
+      const c = coluna(j,i), gente = j.a.concat(j.b);
+      cadeiras[c] = (cadeiras[c] || 0) + gente.length;
+      gente.forEach(id => { if(meu[id]) meu[id][c] = (meu[id][c] || 0) + 1; });
+    }));
+    let fora = 0, pior = 0;
+    t.parts.forEach(p => {
+      let d = 0;
+      cadeiras.forEach((total,c) => {
+        const x = meu[p.id][c] || 0, alvo = total/nP;
+        d = Math.max(d, Math.floor(alvo) - x, x - Math.ceil(alvo));
+      });
+      if(d > 0){ fora++; pior = Math.max(pior, d); }
+    });
+    return { fora:fora, pior:pior };
+  };
+  const partes = [];
+  if(Q >= 2) partes.push({ onde:"numa quadra", r:mede(j => j.quadra-1) });
+  if(L >= 2) partes.push({ onde:"numa leva",   r:mede((j,i) => Math.floor(i/Q)) });
+  const alvo = (Q >= 2 && L >= 2) ? "a quadra e a leva de cada jogo são escolhidas"
+             : (Q >= 2) ? "a quadra de cada jogo é escolhida"
+             : "a ordem das levas é escolhida";
+  const base = '<b>Revezamento:</b> dentro de cada rodada, ' + alvo
+    + ' para todo mundo alternar o máximo possível'
+    + (L >= 2 ? ' — ninguém joga sempre na primeira leva nem espera sempre a última' : '');
+  const ruins = partes.filter(p => p.r.fora > 0);
+  if(!ruins.length) return base + '. Nesta chave deu certo para todos '
+    + '(quando o número de jogos não divide certo, a sobra fica com uma das partes).';
+  return base + ', mas com esta chave ' + ruins.map(p =>
+      (p.r.fora === 1 ? '1 participante ficou' : p.r.fora + ' participantes ficaram')
+      + ' com ' + (p.r.pior === 1 ? 'um jogo' : p.r.pior + ' jogos') + ' a mais ' + p.onde
+      + ' do que o ideal'
+    ).join('; e ') + ': foi a melhor divisão encontrada para esta chave.';
 }
 /* todos os jogos do torneio numa tabela só, no formato da súmula de arena */
 function tabelaJogos(t){
